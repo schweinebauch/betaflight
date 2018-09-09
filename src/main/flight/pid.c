@@ -132,7 +132,7 @@ void resetPidProfile(pidProfile_t *pidProfile)
         .dterm_notch_hz = 0,
         .dterm_notch_cutoff = 160,
         .dterm_filter_type = FILTER_PT1,
-        .itermWindupPointPercent = 40,
+        .itermWindupPointPercent = 90,
         .vbatPidCompensation = 0,
         .pidAtMinThrottle = PID_STABILISATION_ON,
         .levelAngleLimit = 55,
@@ -857,8 +857,10 @@ void FAST_CODE pidController(const pidProfile_t *pidProfile, const rollAndPitchT
         DEBUG_SET(DEBUG_ANTI_GRAVITY, 1, lrintf(antiGravityThrottleHpf * 1000));
     }
     DEBUG_SET(DEBUG_ANTI_GRAVITY, 0, lrintf(itermAccelerator * 1000));
+
     // gradually scale back integration when above windup point
-    const float dynCi = MIN((1.0f - motorMixRange) * ITermWindupPointInv, 1.0f) * dT * itermAccelerator;
+    const float dynCi = constrainf((1.0f - motorMixRange) * ITermWindupPointInv, 0.0f, 1.0f)
+                        * dT * itermAccelerator;
 
     // Precalculate gyro deta for D-term here, this allows loop unrolling
     float gyroRateDterm[XYZ_AXIS_COUNT];
